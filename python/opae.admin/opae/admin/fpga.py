@@ -388,6 +388,10 @@ class fpga_base(sysfs_device):
         (0x8086, 0x0b2b): {'bmcimg': {'user': 1,
                                       'factory': 0},
                            'retimer': {'user': 0,
+                                       'factory': 0}},
+        (0x1c2c, 0x1000): {'bmcimg': {'user': 1,
+                                      'factory': 0},
+                           'retimer': {'user': 0,
                                        'factory': 0}}
     }
 
