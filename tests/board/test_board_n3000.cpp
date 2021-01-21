@@ -291,7 +291,7 @@ TEST_P(board_dfl_n3000_c_p, board_n3000_8) {
 */
 TEST_P(board_dfl_n3000_c_p, board_n3000_12) {
 
-	EXPECT_NE(print_eth_interface_info(tokens_[0]), FPGA_OK);
+	EXPECT_NE(print_eth_interface_info(tokens_[0], "npac"), FPGA_OK);
 }
 
 INSTANTIATE_TEST_CASE_P(board_dfl_n3000_c, board_dfl_n3000_c_p,
