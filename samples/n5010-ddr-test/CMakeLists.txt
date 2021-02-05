@@ -36,3 +36,7 @@ opae_add_executable(TARGET n5010-ddr-test
 target_compile_options(n5010-ddr-test PUBLIC
     -D_GNU_SOURCE
 )
+
+install(FILES n5010-ddr-test.c
+  DESTINATION src/opae/samples/n5010-ddr-test
+  COMPONENT samplesrc)
