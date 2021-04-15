@@ -257,6 +257,7 @@ done
 %{_bindir}/pci_device*
 %{_bindir}/regmap-debugfs*
 %{_bindir}/n5010-ddr-test
+%{_libdir}/libofs_cpeng.so*
 %{_bindir}/hps
 
 
