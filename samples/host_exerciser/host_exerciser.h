@@ -26,6 +26,10 @@
 #pragma once
 #include <opae/cxx/core/events.h>
 #include <opae/cxx/core/shared_buffer.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
+#include <linux/perf_event.h>
+#include <iostream>
 
 #include "afu_test.h"
 
@@ -265,6 +269,34 @@ union he_stride {
   };
 };
 
+//Release 1 has fixed sysfs path,next release update a syspath from user input
+//like dfl_fme0 or dfl_fme1
+
+#define DFL_FME_TYPE_PATH       "/sys/bus/event_source/devices/dfl_fme0/type"
+#define DFL_FME_CPUMASK_PATH    "/sys/bus/event_source/devices/dfl_fme0/cpumask"
+
+#define FAB_MMIO_READ           0xff2006
+#define FAB_MMIO_WRITE          0xff2007
+#define FAB_PCIE0_READ          0xff2000
+#define FAB_PCIE0_WRITE         0xff2001
+#define DFL_FME_CLOCK           0xff0000
+
+extern "C" ssize_t readdata(int fd, void *buf, size_t count);
+
+ssize_t readdata(int fd, void *buf, size_t count)
+{
+  read(fd, buf, count);
+  return 0;
+}
+
+struct read_format {
+  uint64_t nr;
+  struct {
+    uint64_t value;
+    uint64_t id;
+  } values[];
+};
+
 const std::map<std::string, uint32_t> he_modes = {
   { "lpbk", HOST_EXEMODE_LPBK1},
   { "read", HOST_EXEMODE_READ},
@@ -454,6 +486,141 @@ public:
     }
     return offset;
   }
+
+};
+
+class fab_counter {
+private:
+  int fd_mmio_rd;
+  int fd_mmio_wr;
+  int fd_pcie0_rd;
+  int fd_pcie0_wr;
+  int fd_clock;
+  uint64_t id_mmio_rd;
+  uint64_t id_mmio_wr;
+  uint64_t id_pcie0_rd;
+  uint64_t id_pcie0_wr;
+  uint64_t id_clock;
+  struct fabric_counter {
+    uint64_t mmio_read;
+    uint64_t mmio_write;
+    uint64_t pcie0_read;
+    uint64_t pcie0_write;
+    uint64_t clock;
+  };
+  struct fabric_counter fc_before, fc_after;
+
+public:
+  int read_sys_path(uint32_t *val, const char *sysfs_path)
+  {
+    FILE *file;
+    int ret = 0;
+
+    file = fopen(sysfs_path, "r");
+    if (!file) {
+      throw std::runtime_error("fopen failed");
+      ret = -1;
+    }
+    if(1 != fscanf(file,  "%u", val)) {
+      throw std::runtime_error("fscanf failed");
+      ret = -1;
+    }
+    fclose(file);
+    return ret;
+  }
+
+  int  perf_event_attr_initialize(uint32_t ev_type, uint32_t cpumask, uint64_t config, int grpfd)
+  {
+    struct perf_event_attr pea;
+    int fd;
+
+    memset(&pea, 0, sizeof(struct perf_event_attr));
+    pea.type = ev_type;
+    pea.size = sizeof(struct perf_event_attr);
+    pea.config = config;
+    pea.disabled = 1;
+    pea.inherit = 1;
+    pea.sample_type = PERF_SAMPLE_IDENTIFIER;
+    pea.read_format = PERF_FORMAT_GROUP | PERF_FORMAT_ID;
+    fd = syscall(__NR_perf_event_open, &pea, -1, cpumask, grpfd, 0);
+    if (fd == -1) {
+      throw std::runtime_error("perf_event_open failed");
+      return -1;
+    }
+      return fd;
+  }
+	
+  void get_counters()
+  {
+     ioctl(fd_mmio_rd, PERF_EVENT_IOC_DISABLE, PERF_IOC_FLAG_GROUP);
+     read_fab_counters(&fc_after);
+  }  
+	
+  void read_fab_counters(struct fabric_counter *fc)
+  {
+    int i;
+    char buf[4096];
+    struct read_format* rdft = (struct read_format*) buf;
+
+    readdata(fd_mmio_rd, buf, sizeof(buf));
+		
+    for (i = 0; i < (int)rdft->nr; i++) {
+      if (rdft->values[i].id == id_mmio_rd) {
+	fc->mmio_read = rdft->values[i].value;
+      } else if (rdft->values[i].id == id_mmio_wr) {
+	fc->mmio_write = rdft->values[i].value;
+      } else if (rdft->values[i].id == id_pcie0_rd) {
+	fc->pcie0_read = rdft->values[i].value;
+      } else if (rdft->values[i].id == id_pcie0_wr) {
+	fc->pcie0_write = rdft->values[i].value;
+      } else if (rdft->values[i].id == id_clock) {
+	fc->clock = rdft->values[i].value;
+      }
+    }
+  }
+
+  void fabric_counter_status()
+  {
+    std::cout << "fab_mmio_rd_cnt  fab_mmio_wr_cnt fab_pcie0_rd_cnt fab_pcie0_wr_cnt dfl_fme_clock" << std::endl;
+    std::cout << std::setw(10) << fc_after.mmio_read - fc_before.mmio_read      << ' '
+              << std::setw(15) << fc_after.mmio_write - fc_before.mmio_write    << ' '
+              << std::setw(15) << fc_after.pcie0_read  - fc_before.pcie0_read   << ' '
+              << std::setw(15) << fc_after.pcie0_write - fc_before.pcie0_write  << ' '
+              << std::setw(15) << fc_after.clock - fc_before.clock	        << ' '
+              << std::endl     << std::endl;
+  }
+
+  fab_counter()
+  {
+    int ret=0;
+    uint32_t type, cpumask;
+
+    ret = read_sys_path(&type, DFL_FME_TYPE_PATH);
+    if(ret == -1) {
+      throw std::runtime_error("Not able to get the type val");
+    }
+    ret = read_sys_path(&cpumask, DFL_FME_CPUMASK_PATH);
+    if(ret == -1) {
+       throw std::runtime_error("Not able to get the cpumask");
+    }
+
+    fd_mmio_rd = perf_event_attr_initialize(type, cpumask, FAB_MMIO_READ, -1);
+    ioctl(fd_mmio_rd, PERF_EVENT_IOC_ID, &id_mmio_rd);
+    fd_mmio_wr = perf_event_attr_initialize(type, cpumask, FAB_MMIO_WRITE, fd_mmio_rd);
+    ioctl(fd_mmio_wr, PERF_EVENT_IOC_ID, &id_mmio_wr);
+    fd_pcie0_rd = perf_event_attr_initialize(type, cpumask, FAB_PCIE0_READ, fd_mmio_rd);
+    ioctl(fd_pcie0_rd, PERF_EVENT_IOC_ID, &id_pcie0_rd);
+    fd_pcie0_wr = perf_event_attr_initialize(type, cpumask, FAB_PCIE0_WRITE, fd_mmio_rd);
+    ioctl(fd_pcie0_wr, PERF_EVENT_IOC_ID, &id_pcie0_wr);
+    fd_clock = perf_event_attr_initialize(type, cpumask, DFL_FME_CLOCK, fd_mmio_rd);
+    ioctl(fd_clock, PERF_EVENT_IOC_ID, &id_clock);
+
+    ioctl(fd_mmio_rd, PERF_EVENT_IOC_RESET, PERF_IOC_FLAG_GROUP);
+    read_fab_counters(&fc_before);
+    ioctl(fd_mmio_rd, PERF_EVENT_IOC_ENABLE, PERF_IOC_FLAG_GROUP);
+  }
+
+  ~fab_counter() {}
 
 };
 } // end of namespace host_exerciser

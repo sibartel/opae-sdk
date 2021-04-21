@@ -122,6 +122,8 @@ public:
         auto d_afu = dynamic_cast<host_exerciser*>(afu);
         host_exe_ = dynamic_cast<host_exerciser*>(afu);
 
+        fab_counter f_cntr;
+        
         auto ret = parse_input_options();
         if (ret != 0) {
             std::cerr << "Failed to parese input options" << std::endl;
@@ -194,8 +196,12 @@ public:
 
 
         std::cout << "Test Completed" << std::endl;
+
+        f_cntr.get_counters();
+
         host_exerciser_swtestmsg();
         host_exerciser_status();
+        f_cntr.fabric_counter_status();
 
         /* Compare buffer contents only loopback test mode*/
         if (he_lpbk_cfg_.TestMode == HOST_EXEMODE_LPBK1)
