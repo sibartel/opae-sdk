@@ -1,4 +1,6 @@
 #!/bin/bash
+
+# Deb test 3
 set -x
 if [ -z ${1+1} ]; then
 	echo "Must specify a build directory"
