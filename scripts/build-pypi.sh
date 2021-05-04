@@ -1,5 +1,7 @@
 #!/bin/bash
 
+#Deb test
+
 mkdir mybuild
 cd mybuild
 
