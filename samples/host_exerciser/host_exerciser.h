@@ -26,6 +26,8 @@
 #pragma once
 #include <opae/cxx/core/events.h>
 #include <opae/cxx/core/shared_buffer.h>
+#include <opae/cxx/core/token.h>
+#include <opae/cxx/core/properties.h>
 
 #include "afu_test.h"
 
@@ -33,6 +35,8 @@
 namespace host_exerciser {
 using opae::fpga::types::event;
 using opae::fpga::types::shared_buffer;
+using opae::fpga::types::properties;
+using opae::fpga::types::token;
 
 static const uint64_t HELPBK_TEST_TIMEOUT = 30000;
 static const uint64_t HELPBK_TEST_SLEEP_INVL = 100;
@@ -236,8 +240,8 @@ union he_status1 {
   };
   uint64_t value;
   struct {
-    uint32_t numPendWrites : 32;
     uint32_t numPendReads : 32;
+    uint32_t numPendWrites : 32;
   };
 };
 
@@ -443,6 +447,7 @@ public:
   bool he_continuousmode_;
   uint32_t he_interleave_;
 
+
   std::map<uint32_t, uint32_t> limits_;
 
   uint32_t get_offset(uint32_t base, uint32_t i) const {
@@ -454,7 +459,12 @@ public:
     }
     return offset;
   }
-
+  
+   token::ptr_t get_parent_token()
+   {
+      auto tokens = token::enumerate({properties::get(handle_)});
+      return tokens[0];
+   }
 };
 } // end of namespace host_exerciser
 

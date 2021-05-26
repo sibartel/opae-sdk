@@ -1,4 +1,4 @@
-## Copyright(c) 2014-2020, Intel Corporation
+## Copyright(c) 2020, Intel Corporation
 ##
 ## Redistribution  and  use  in source  and  binary  forms,  with  or  without
 ## modification, are permitted provided that the following conditions are met:
@@ -24,51 +24,20 @@
 ## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,  EVEN IF ADVISED OF THE
 ## POSSIBILITY OF SUCH DAMAGE.
 
-#find_package(UUID REQUIRED)
-#include(opae_devpkgs_cmake_install)
-#include(ase_add_module)
 
-include_directories(${OPAE_INCLUDE_DIR}
-  ${OPAE_SDK_SOURCE}/libopae/src )
-include_directories(base/sw)
+opae_test_add_static_lib(TARGET fpgaperf-static
+    SOURCE ${OPAE_SDK_SOURCE}/samples/fpgaperf_counter/fpgaperf_counter.c
+    LIBS
+        opae-c
+)
 
-if(BUILD_ASE_SAMPLES)
-  find_package(Quartus)
-  find_package(Questa)
-endif()
 
-######################################################################
-# Add the samples ####################################################
-######################################################################
+opae_test_add(TARGET test_fpgaperf_c
+    SOURCE test_fpgaperf_counter_c.cpp
+    LIBS
+        fpgaperf-static
+)
 
-set(OPAE_SAMPLES src/opae/samples)
-if(BUILD_ASE_SAMPLES)
-  # BBB libraries (MPF, DMA, etc)
-  include(intel_fpga_bbb)
-  Build_Intel_FPGA_BBB()
-
-  opae_add_subdirectory(intg_xeon_nlb)
-  opae_add_subdirectory(hello_afu)
-  opae_add_subdirectory(hello_mpf_afu)
-  if(BUILD_ASE_INTR)
-    opae_add_subdirectory(hello_intr_afu)
-  endif()
-  # opae_add_subdirectory(hello_error_afu)
-  # opae_add_subdirectory(hello_dma_afu)
-endif()
-
-######################################################################
-# Client application #################################################
-######################################################################
-if(OPAE_BUILD_SIM)
-  add_definitions(-DTEST_TIMEOUT=130000000)
-endif(OPAE_BUILD_SIM)
-
-opae_add_subdirectory(hello_fpga)
-opae_add_subdirectory(hello_events)
-opae_add_subdirectory(object_api)
-opae_add_subdirectory(hssi)
-opae_add_subdirectory(dummy_afu)
-opae_add_subdirectory(host_exerciser)
-opae_add_subdirectory(fpgaperf_counter)
-opae_add_subdirectory(n5010-ddr-test)
+target_include_directories(test_fpgaperf_c
+    PRIVATE ${OPAE_SDK_SOURCE}/samples
+)
