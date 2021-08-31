@@ -104,6 +104,10 @@ static struct command_handler {
 	 .filter = sec_filter,
 	 .run = sec_command,
 	 .help = sec_help},
+	{.command = "transceiver",
+	 .filter = tr_filter,
+	 .run = tr_command,
+	 .help = tr_help},
 };
 
 /*

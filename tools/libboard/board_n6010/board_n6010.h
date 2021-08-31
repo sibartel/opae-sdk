@@ -113,6 +113,26 @@ fpga_result print_mac_info(fpga_token token);
 fpga_result print_sec_info(fpga_token token);
 
 /**
+* Prints pcie informantion.
+*
+* @param[in] token            fpga_token object for device (FPGA_DEVICE type)
+* @returns FPGA_OK on success. FPGA_NOT_FOUND if phy group sysfs not found.
+* FPGA_INVALID_PARAM if invalid parameters were provide
+*
+*/
+fpga_result print_pcie_info(fpga_token token);
+
+/**
+* Prints ether informantion.
+*
+* @param[in] token            fpga_token object for device (FPGA_DEVICE type)
+* @returns FPGA_OK on success. FPGA_NOT_FOUND if phy group sysfs not found.
+* FPGA_INVALID_PARAM if invalid parameters were provide
+*
+*/
+fpga_result print_ether_info(fpga_token token);
+
+/**
 * Prints fme verbose info
 *
 * @param[in] token            fpga_token object for device (FPGA_DEVICE type)

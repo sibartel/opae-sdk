@@ -637,6 +637,155 @@ out:
 	return res;
 }
 
+
+void tr_help(void)
+{
+	printf("\nPrint transceiver information\n"
+		"        fpgainfo transceiver [-h] [-P] [-E]\n"
+		"                -h,--help           Print this help\n"
+		"                -P,--pcie           Print PCIe configuration\n"
+		"                -E,--ether          Print ethernet configuration\n"
+		"\n");
+}
+
+#define TR_GETOPT_STRING ":PEh"
+#define TR_OPT_PCIE  0x1
+#define TR_OPT_ETH   0x2
+int tr_opts = 0;
+int parse_tr_args(int argc, char *argv[])
+{
+	struct option longopts[] = {
+		{"pcie", no_argument, NULL, 'P'},
+		{"ether", no_argument, NULL, 'E'},
+		{"help", no_argument, NULL, 'h'},
+		{0, 0, 0, 0},
+	};
+	int getopt_ret;
+	int option_index;
+
+	/* default configuration */
+	group_num = -1;
+
+	optind = 0;
+	while (-1 != (getopt_ret = getopt_long(argc, argv, TR_GETOPT_STRING,
+		longopts, &option_index))) {
+		const char *tmp_optarg = optarg;
+
+		if (optarg && ('=' == *tmp_optarg)) {
+			++tmp_optarg;
+		}
+
+		switch (getopt_ret) {
+		case 'P':
+			tr_opts = TR_OPT_PCIE;
+			break;
+
+		case 'E':
+			tr_opts = TR_OPT_ETH;
+			break;
+
+		case 'h':   /* help */
+			tr_help();
+			return -1;
+
+		case ':':   /* missing option argument */
+			fprintf(stderr, "Missing option argument\n");
+			phy_help();
+			return -1;
+
+		case '?':
+		default:    /* invalid option */
+			fprintf(stderr, "Invalid cmdline options\n");
+			phy_help();
+			return -1;
+		}
+	}
+
+	if (tr_opts == 0)
+		tr_opts = TR_OPT_PCIE | TR_OPT_ETH;
+
+	return 0;
+}
+
+fpga_result tr_filter(fpga_properties *filter, int argc, char *argv[])
+{
+	fpga_result res = FPGA_INVALID_PARAM;
+
+	if (0 == parse_tr_args(argc, argv)) {
+		res = fpgaPropertiesSetObjectType(*filter, FPGA_DEVICE);
+		fpgainfo_print_err("setting type to FPGA_DEVICE", res);
+	}
+	return res;
+}
+
+fpga_result tr_command(fpga_token *tokens, int num_tokens, int argc,
+	char *argv[])
+{
+	(void)argc;
+	(void)argv;
+	fpga_result res = FPGA_OK;
+	fpga_properties props = NULL;
+
+	int i = 0;
+	for (i = 0; i < num_tokens; ++i) {
+		res = fpgaGetProperties(tokens[i], &props);
+		if (res != FPGA_OK) {
+			OPAE_ERR("Failed to get properties\n");
+			continue;
+		}
+
+		fpgainfo_board_info(tokens[i]);
+		fpgainfo_print_common("//****** TRANSCEIVER ******//", props);
+		res = tr_info(tokens[i]);
+		if (res != FPGA_OK) {
+			printf("transceiver info is not supported\n");
+		}
+	}
+
+	return FPGA_OK;
+}
+
+// prints transceiver info
+fpga_result tr_info(fpga_token token)
+{
+	fpga_result res = FPGA_OK;
+	void *dl_handle = NULL;
+
+	// pcie transceiver info
+	fpga_result(*print_pcie_info)(fpga_token token);
+	// ether transceiver info
+	fpga_result(*print_eth_info)(fpga_token token);
+
+	res = load_board_plugin(token, &dl_handle);
+	if (res != FPGA_OK) {
+		OPAE_MSG("Failed to load board plugin\n");
+		goto out;
+	}
+
+	if (tr_opts & TR_OPT_PCIE) {
+		print_pcie_info = dlsym(dl_handle, "print_pcie_info");
+		if (print_pcie_info) {
+			res = print_pcie_info(token);
+		} else {
+			OPAE_MSG("No print_pcie_info entry point:%s\n", dlerror());
+			res = FPGA_NOT_FOUND;
+		}
+	}
+
+	if (tr_opts & TR_OPT_ETH) {
+		print_eth_info = dlsym(dl_handle, "print_eth_info");
+		if (print_eth_info) {
+			res = print_eth_info(token);
+		} else {
+			OPAE_MSG("No print_eth_info entry point:%s\n", dlerror());
+			res = FPGA_NOT_FOUND;
+		}
+	}
+
+out:
+	return res;
+}
+
 // prints fme verbose info
 fpga_result fme_verbose_info(fpga_token token)
 {

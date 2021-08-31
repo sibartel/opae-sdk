@@ -72,6 +72,8 @@
 #define HSSI_PORT_ATTRIBUTE                     0x10
 #define HSSI_VERSION                            0x8
 
+#define PCIE_FEATURE_ID                  0x20
+
 // boot page info sysfs
 #define DFL_SYSFS_BOOT_GLOB "*dfl*/**/fpga_boot_image"
 #define BOOTPAGE_PATTERN "_([0-9a-zA-Z]+)"
@@ -116,9 +118,10 @@ struct hssi_port_attribute {
 			uint32_t profile : 6;
 			uint32_t ready_latency : 4;
 			uint32_t data_bus_width : 3;
-			uint32_t low_speed_mac : 1;
+			uint32_t low_speed_mac : 2;
 			uint32_t dynamic_pr : 1;
-			uint32_t reserved : 16;
+			uint32_t sub_profile : 5;
+			uint32_t reserved : 11;
 		};
 	};
 };
@@ -130,7 +133,7 @@ typedef struct hssi_port_profile {
 
 } hssi_port_profile;
 
-#define HSS_PORT_PROFILE_SIZE 33
+#define HSS_PORT_PROFILE_SIZE 34
 
 hssi_port_profile hssi_port_profiles[] = {
 
@@ -166,8 +169,31 @@ hssi_port_profile hssi_port_profiles[] = {
 	{.port_index = 29, .profile = "200GAUI-4"},
 	{.port_index = 30, .profile = "200GAUI-8"},
 	{.port_index = 31, .profile = "400GAUI-4"},
-	{.port_index = 32, .profile = "400GAUI-8"}
+	{.port_index = 32, .profile = "400GAUI-8"},
+	{.port_index = 33, .profile = "CPRI"}
  };
+
+#define HSS_PORT_SUB_PROFILE_SIZE 16
+
+hssi_port_profile hssi_port_sub_profiles[] = {
+
+	{.port_index = 0, .profile = "None"},
+	{.port_index = 1, .profile = "OTN"},
+	{.port_index = 2, .profile = "FlexE"},
+	{.port_index = 3, .profile = "PCS"},
+	{.port_index = 4, .profile = "MAC + PCS"},
+	{.port_index = 5, .profile = "0.6G PMA"},
+	{.port_index = 6, .profile = "1.2G PMA"},
+	{.port_index = 7, .profile = "2.4G PMA"},
+	{.port_index = 8, .profile = "3.0G PMA"},
+	{.port_index = 9, .profile = "4.9G PMA"},
+	{.port_index = 10, .profile = "6.1G PMA"},
+	{.port_index = 11, .profile = "8.1G PMA"},
+	{.port_index = 12, .profile = "9.8G PMA"},
+	{.port_index = 13, .profile = "10G PCS"},
+	{.port_index = 14, .profile = "12G PCS"},
+	{.port_index = 15, .profile = "24G PCS"}
+};
 
 
 // Parse firmware version
@@ -406,7 +432,7 @@ fpga_result print_phy_info(fpga_token token)
 		port_profile.csr = *((uint32_t *)(mmap_ptr +
 			HSSI_PORT_ATTRIBUTE + i * 4));
 
-		if (port_profile.profile > HSS_PORT_PROFILE_SIZE) {
+		if (port_profile.profile >= HSS_PORT_PROFILE_SIZE) {
 			printf("Port%-28d :%s\n", i, "N/A");
 			continue;
 		}
@@ -524,6 +550,106 @@ fpga_result print_sec_info(fpga_token token)
 	printf("********** SEC Info END ************ \n");
 
 	return resval;
+}
+
+// print pcie information
+fpga_result print_pcie_info(fpga_token token)
+{
+	fpga_result res = FPGA_OK;
+	struct opae_uio uio;
+	char feature_dev[SYSFS_MAX_SIZE] = { 0 };
+	uint8_t *mmap_ptr = NULL;
+
+	res = find_dev_feature(token, PCIE_FEATURE_ID, feature_dev);
+	if (res != FPGA_OK) {
+		OPAE_ERR("Failed to find feature ");
+		return res;
+	}
+
+	res = opae_uio_open(&uio, feature_dev);
+	if (res) {
+		OPAE_ERR("Failed to open uio");
+		return res;
+	}
+
+	res = opae_uio_region_get(&uio, 0, (uint8_t **)&mmap_ptr, NULL);
+	if (res) {
+		OPAE_ERR("Failed to get uio region");
+		opae_uio_close(&uio);
+		return res;
+	}
+
+	printf("//****** PCIe information ******//\n");
+	// TODO: what configuration to be shown is not clear
+
+	opae_uio_close(&uio);
+	return res;
+}
+
+// print ether information
+fpga_result print_eth_info(fpga_token token)
+{
+	fpga_result res = FPGA_OK;
+	struct opae_uio uio;
+	char feature_dev[SYSFS_MAX_SIZE] = { 0 };
+	uint32_t dw[] = {32, 64, 128, 256, 512, 1024};
+	struct hssi_port_attribute port_profile;
+	struct hssi_feature_list  feature_list;
+	uint8_t *mmap_ptr = NULL;
+	uint32_t i = 0;
+
+	res = find_dev_feature(token, HSSI_FEATURE_ID, feature_dev);
+	if (res != FPGA_OK) {
+		OPAE_ERR("Failed to find feature ");
+		return res;
+	}
+
+	res = opae_uio_open(&uio, feature_dev);
+	if (res) {
+		OPAE_ERR("Failed to open uio");
+		return res;
+	}
+
+	res = opae_uio_region_get(&uio, 0, (uint8_t **)&mmap_ptr, NULL);
+	if (res) {
+		OPAE_ERR("Failed to get uio region");
+		opae_uio_close(&uio);
+		return res;
+	}
+
+	feature_list.csr = *((uint32_t *) (mmap_ptr + HSSI_FEATURE_LIST));
+
+	for (i = 0; i < feature_list.hssi_num; i++) {
+		port_profile.csr = *((uint32_t *)(mmap_ptr +
+			HSSI_PORT_ATTRIBUTE + i * 4));
+
+		if ((port_profile.profile >= HSS_PORT_PROFILE_SIZE) ||
+			(port_profile.sub_profile >= HSS_PORT_SUB_PROFILE_SIZE)
+			) {
+			printf("Port%-28d : %s\n", i, "N/A");
+			continue;
+		}
+
+		printf("//****** Port%d information ******//\n", i);
+
+		printf("%-32s : %s\n", "Profile",
+			hssi_port_profiles[port_profile.profile].profile);
+		printf("%-32s : %s\n", "Sub Profile",
+			hssi_port_profiles[port_profile.sub_profile].profile);
+		printf("%-32s : %s\n", "Dynamic Reconfiguration",
+			port_profile.dynamic_pr ? "Presence" : "Not Presence");
+		printf("%-32s : %s\n", "Low Speed MAC Interface",
+			port_profile.low_speed_mac == 0 ? "MII" :
+			(port_profile.low_speed_mac == 1 ? "GMII" : "XGMII"));
+		printf("%-32s : %u\n", "Data Bus Width",
+			port_profile.data_bus_width < 6 ?
+			dw[port_profile.data_bus_width] : 0);
+		printf("%-32s : %u\n", "Ready Latency",
+			port_profile.ready_latency);
+	}
+
+	opae_uio_close(&uio);
+	return res;
 }
 
 // print fme verbose info
