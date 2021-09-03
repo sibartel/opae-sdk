@@ -33,7 +33,8 @@ setup(
         'console_scripts': [
             'hssistats = ethernet.hssistats:main',
             'hssimac = ethernet.hssimac:main',
-            'hssiloopback = ethernet.hssiloopback:main'
+            'hssiloopback = ethernet.hssiloopback:main',
+            'hssifecmode = ethernet.hssifecmode:main'
         ]
     },
     description="hssi ethernet tools",

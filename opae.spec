@@ -136,7 +136,7 @@ for file in %{buildroot}%{python3_sitelib}/opae/admin/tools/{fpgaflash,fpgaotsu,
    chmod a+x $file
 done
 # ethernet
-for file in %{buildroot}%{python3_sitelib}/ethernet/{hssicommon,hssiloopback,hssimac,hssistats}.py; do
+for file in %{buildroot}%{python3_sitelib}/ethernet/{hssicommon,hssiloopback,hssimac,hssistats,hssifecmode}.py; do
    chmod a+x $file
 done
 # diag
@@ -264,6 +264,7 @@ done
 %{_bindir}/hssiloopback
 %{_bindir}/hssimac
 %{_bindir}/hssistats
+%{_bindir}/hssifecmode
 %{_bindir}/opae.io
 %{_bindir}/opaeuiotest
 %{_bindir}/pac_hssi_config.py

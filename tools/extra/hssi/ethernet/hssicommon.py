@@ -847,7 +847,7 @@ class HSSICOMMON(object):
             ret = self.clear_reg(region_index,
                                  HSSI_CSR.HSSI_CTL_STS.value)
             if not ret:
-                print("Failed to clear HSSI CTL Address csr")
+                print("Failed to clear HSSI CTL Status csr")
                 return False
 
         return True
