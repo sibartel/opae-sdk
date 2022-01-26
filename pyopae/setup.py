@@ -45,25 +45,22 @@ extensions = [
               extra_compile_args=["-std=c++11"],
               extra_link_args=["-std=c++11"],
               include_dirs=[
-                  "@CMAKE_INSTALL_PREFIX@/include",
                   pybind_include_dirs(),
                   pybind_include_dirs(True)
               ],
-              libraries=["opae-c", "opae-cxx-core"],
-              library_dirs=["@CMAKE_INSTALL_PREFIX@/lib",
-                            "@CMAKE_INSTALL_PREFIX@/lib64"])
+              libraries=["opae-c", "opae-cxx-core"])
 ]
 
 setup(
     name="opae.fpga",
-    version="@INTEL_FPGA_API_VERSION@",
+    version="1.1.2",
     packages=find_packages(),
     entry_points={
         'console_scripts': [
         ]
     },
     ext_modules=extensions,
-    install_requires=['pybind11>=@PYOPAE_PYBIND11_VERSION@'],
+    install_requires=['pybind11>=2.2'],
     description="pyopae provides Python bindings around the "
                 "OPAE C API",
     license="BSD3",
