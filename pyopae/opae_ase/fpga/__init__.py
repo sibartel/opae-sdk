@@ -1,8 +1,9 @@
-from ._opae import (properties, token, handle, shared_buffer, event, enumerate,
-                   open, allocate_shared_buffer, register_event, error, errors)
-from ._opae import (DEVICE, ACCELERATOR, OPEN_SHARED, EVENT_ERROR,
-                   EVENT_INTERRUPT, EVENT_POWER_THERMAL, ACCELERATOR_ASSIGNED,
-                   ACCELERATOR_UNASSIGNED, RECONF_FORCE)
+from ._opae_ase import (properties, token, handle, shared_buffer, event, enumerate,
+                       open, allocate_shared_buffer, register_event, error, errors)
+from ._opae_ase import (DEVICE, ACCELERATOR, OPEN_SHARED, EVENT_ERROR,
+                       EVENT_INTERRUPT, EVENT_POWER_THERMAL, ACCELERATOR_ASSIGNED,
+                       ACCELERATOR_UNASSIGNED, RECONF_FORCE)
+
 __all__ = ['properties',
            'token',
            'handle',

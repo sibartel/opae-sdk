@@ -18,7 +18,7 @@ using opae::fpga::types::shared_buffer;
 using opae::fpga::types::event;
 using opae::fpga::types::error;
 
-PYBIND11_MODULE(_opae, m) {
+PYBIND11_MODULE(_opae_ase, m) {
   py::options opts;
   // opts.disable_function_signatures();
 

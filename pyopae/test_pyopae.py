@@ -32,7 +32,7 @@ import time
 import unittest
 import uuid
 import sys
-import opae.fpga
+import opae_ase.fpga
 
 NLB0 = "d8424dc4-a4a3-c413-f89e-433683f9040b"
 
@@ -51,189 +51,189 @@ NLB0_MDATA = {"version": 640,
 
 class TestProperties(unittest.TestCase):
     def test_set_parent(self):
-        props = opae.fpga.properties(type=opae.fpga.DEVICE)
-        toks = opae.fpga.enumerate([props])
-        props2 = opae.fpga.properties(type=opae.fpga.ACCELERATOR,
-                                      parent=toks[0])
+        props = opae_ase.fpga.properties(type=opae_ase.fpga.DEVICE)
+        toks = opae_ase.fpga.enumerate([props])
+        props2 = opae_ase.fpga.properties(type=opae_ase.fpga.ACCELERATOR,
+                                          parent=toks[0])
         assert props2.parent
-        props2 = opae.fpga.properties(type=opae.fpga.ACCELERATOR)
+        props2 = opae_ase.fpga.properties(type=opae_ase.fpga.ACCELERATOR)
         props2.parent = toks[0]
         assert props2.parent
 
     def test_guid(self):
-        props = opae.fpga.properties(guid=NLB0)
+        props = opae_ase.fpga.properties(guid=NLB0)
         guid_str = props.guid
         guid = uuid.UUID(guid_str)
         assert str(guid).lower() == NLB0
-        props = opae.fpga.properties()
+        props = opae_ase.fpga.properties()
         props.guid = NLB0
         guid_str = props.guid
         guid = uuid.UUID(guid_str)
         assert str(guid).lower() == NLB0
 
     def test_set_objtype_accelerator(self):
-        props = opae.fpga.properties(type=opae.fpga.ACCELERATOR)
-        assert props.type == opae.fpga.ACCELERATOR
-        props = opae.fpga.properties(type=opae.fpga.DEVICE)
-        props.type = opae.fpga.ACCELERATOR
-        assert props.type == opae.fpga.ACCELERATOR
+        props = opae_ase.fpga.properties(type=opae_ase.fpga.ACCELERATOR)
+        assert props.type == opae_ase.fpga.ACCELERATOR
+        props = opae_ase.fpga.properties(type=opae_ase.fpga.DEVICE)
+        props.type = opae_ase.fpga.ACCELERATOR
+        assert props.type == opae_ase.fpga.ACCELERATOR
 
     def test_set_objtype_device(self):
-        props = opae.fpga.properties(type=opae.fpga.DEVICE)
-        assert props.type == opae.fpga.DEVICE
-        props = opae.fpga.properties(type=opae.fpga.ACCELERATOR)
-        props.type = opae.fpga.DEVICE
-        assert props.type == opae.fpga.DEVICE
+        props = opae_ase.fpga.properties(type=opae_ase.fpga.DEVICE)
+        assert props.type == opae_ase.fpga.DEVICE
+        props = opae_ase.fpga.properties(type=opae_ase.fpga.ACCELERATOR)
+        props.type = opae_ase.fpga.DEVICE
+        assert props.type == opae_ase.fpga.DEVICE
 
     def test_set_segment(self):
-        props = opae.fpga.properties(segment=0x9090)
+        props = opae_ase.fpga.properties(segment=0x9090)
         assert props.segment == 0x9090
         props.segment = 0xA1A1
         assert props.segment == 0xA1A1
 
     def test_set_bus(self):
-        props = opae.fpga.properties(bus=0x5e)
+        props = opae_ase.fpga.properties(bus=0x5e)
         assert props.bus == 0x5e
         props.bus = 0xbe
         assert props.bus == 0xbe
 
     def test_set_device(self):
-        props = opae.fpga.properties(device=0xe)
+        props = opae_ase.fpga.properties(device=0xe)
         assert props.device == 0xe
         props.device = 0xf
         assert props.device == 0xf
 
     def test_set_function(self):
-        props = opae.fpga.properties(function=0x7)
+        props = opae_ase.fpga.properties(function=0x7)
         assert props.function == 0x7
         props.function = 0x6
         assert props.function == 0x6
 
     def test_set_socket_id(self):
-        props = opae.fpga.properties(socket_id=1)
+        props = opae_ase.fpga.properties(socket_id=1)
         assert props.socket_id == 1
         props.socket_id = 0
         assert props.socket_id == 0
 
     def test_set_object_id(self):
-        props = opae.fpga.properties(object_id=0xcafe)
+        props = opae_ase.fpga.properties(object_id=0xcafe)
         assert props.object_id == 0xcafe
         props.object_id = 0xfade
         assert props.object_id == 0xfade
 
     def test_set_num_errors(self):
-        props = opae.fpga.properties(num_errors=8)
+        props = opae_ase.fpga.properties(num_errors=8)
         assert props.num_errors == 8
         props.num_errors = 4
         assert props.num_errors == 4
 
     def test_set_num_slots(self):
-        props = opae.fpga.properties(type=opae.fpga.DEVICE,
-                                     num_slots=3)
+        props = opae_ase.fpga.properties(type=opae_ase.fpga.DEVICE,
+                                         num_slots=3)
         assert props.num_slots == 3
         props.num_slots = 2
         assert props.num_slots == 2
 
     def test_set_bbs_id(self):
-        props = opae.fpga.properties(type=opae.fpga.DEVICE,
-                                     bbs_id=0xc0c0cafe)
+        props = opae_ase.fpga.properties(type=opae_ase.fpga.DEVICE,
+                                         bbs_id=0xc0c0cafe)
         assert props.bbs_id == 0xc0c0cafe
         props.bbs_id = 0xb0b0fade
         assert props.bbs_id == 0xb0b0fade
 
     def test_set_bbs_version(self):
-        props = opae.fpga.properties(type=opae.fpga.DEVICE,
-                                     bbs_version=(0, 1, 2))
+        props = opae_ase.fpga.properties(type=opae_ase.fpga.DEVICE,
+                                         bbs_version=(0, 1, 2))
         assert props.bbs_version == (0, 1, 2)
         props.bbs_version = (1, 2, 3)
         assert props.bbs_version == (1, 2, 3)
 
     def test_set_vendor_id(self):
-        props = opae.fpga.properties(vendor_id=0xfafa)
+        props = opae_ase.fpga.properties(vendor_id=0xfafa)
         assert props.vendor_id == 0xfafa
         props.vendor_id = 0xdada
         assert props.vendor_id == 0xdada
 
     def test_set_device_id(self):
-        props = opae.fpga.properties(device_id=0xfa)
+        props = opae_ase.fpga.properties(device_id=0xfa)
         assert props.device_id == 0xfa
         props.device_id = 0xda
         assert props.device_id == 0xda
 
     @unittest.skip("model not implemented yet")
     def test_set_model(self):
-        props = opae.fpga.properties(model="intel skxp")
+        props = opae_ase.fpga.properties(model="intel skxp")
         assert props.model == "intel skxp"
         props.model = "intel skxp 2"
         assert props.model == "intel skxp 2"
 
     @unittest.skip("local_memory_size not implemented yet")
     def test_set_local_memory_size(self):
-        props = opae.fpga.properties(local_memory_size=0xffff)
+        props = opae_ase.fpga.properties(local_memory_size=0xffff)
         assert props.local_memory_size == 0xffff
         props.local_memory_size = 0xaaaa
         assert props.local_memory_size == 0xaaaa
 
     @unittest.skip("capabilities not implemented yet")
     def test_set_capabilities(self):
-        props = opae.fpga.properties(capabilities=0xdeadbeef)
+        props = opae_ase.fpga.properties(capabilities=0xdeadbeef)
         assert props.capabilities == 0xdeadbeef
         props.capabilities = 0xfeebdaed
         assert props.capabilities == 0xfeebdaed
 
     def test_set_num_mmio(self):
-        props = opae.fpga.properties(type=opae.fpga.ACCELERATOR,
-                                     num_mmio=4)
+        props = opae_ase.fpga.properties(type=opae_ase.fpga.ACCELERATOR,
+                                         num_mmio=4)
         assert props.num_mmio == 4
         props.num_mmio = 5
         assert props.num_mmio == 5
 
     def test_set_num_interrupts(self):
-        props = opae.fpga.properties(type=opae.fpga.ACCELERATOR,
-                                     num_interrupts=9)
+        props = opae_ase.fpga.properties(type=opae_ase.fpga.ACCELERATOR,
+                                         num_interrupts=9)
         assert props.num_interrupts == 9
         props.num_interrupts = 8
         assert props.num_interrupts == 8
 
     def test_set_accelerator_state(self):
-        props = opae.fpga.properties(
-            type=opae.fpga.ACCELERATOR,
-            accelerator_state=opae.fpga.ACCELERATOR_ASSIGNED)
-        assert props.accelerator_state == opae.fpga.ACCELERATOR_ASSIGNED
-        props.accelerator_state = opae.fpga.ACCELERATOR_UNASSIGNED
-        assert props.accelerator_state == opae.fpga.ACCELERATOR_UNASSIGNED
+        props = opae_ase.fpga.properties(
+            type=opae_ase.fpga.ACCELERATOR,
+            accelerator_state=opae_ase.fpga.ACCELERATOR_ASSIGNED)
+        assert props.accelerator_state == opae_ase.fpga.ACCELERATOR_ASSIGNED
+        props.accelerator_state = opae_ase.fpga.ACCELERATOR_UNASSIGNED
+        assert props.accelerator_state == opae_ase.fpga.ACCELERATOR_UNASSIGNED
 
 
 class TestToken(unittest.TestCase):
     def test_enumerate(self):
-        props = opae.fpga.properties(guid=NLB0)
-        toks = opae.fpga.enumerate([props])
+        props = opae_ase.fpga.properties(guid=NLB0)
+        toks = opae_ase.fpga.enumerate([props])
         assert toks
 
     def test_enumerate_kwargs(self):
-        toks = opae.fpga.enumerate(guid=NLB0)
+        toks = opae_ase.fpga.enumerate(guid=NLB0)
         assert toks
 
     def test_enumerate_empty_kwargs(self):
-        toks = opae.fpga.enumerate()
+        toks = opae_ase.fpga.enumerate()
         assert toks
 
     def test_token_properties(self):
-        props = opae.fpga.properties(guid=NLB0)
-        toks = opae.fpga.enumerate([props])
+        props = opae_ase.fpga.properties(guid=NLB0)
+        toks = opae_ase.fpga.enumerate([props])
         assert toks
         for tok in toks:
-            token_props = opae.fpga.properties(tok)
+            token_props = opae_ase.fpga.properties(tok)
             assert token_props
             assert token_props.guid and token_props.guid != ""
 
 
 class TestHandle(unittest.TestCase):
     def setUp(self):
-        self.props = opae.fpga.properties(type=opae.fpga.ACCELERATOR)
-        self.toks = opae.fpga.enumerate([self.props])
+        self.props = opae_ase.fpga.properties(type=opae_ase.fpga.ACCELERATOR)
+        self.toks = opae_ase.fpga.enumerate([self.props])
         assert self.toks
-        self.handle = opae.fpga.open(self.toks[0])
+        self.handle = opae_ase.fpga.open(self.toks[0])
         assert self.handle
         with open('m0.gbs', 'w+b') as fd:
             if sys.version_info[0] == 3:
@@ -246,7 +246,7 @@ class TestHandle(unittest.TestCase):
 
     def test_open_null_token(self):
         with self.assertRaises(ValueError):
-            hndl = opae.fpga.open(None)
+            hndl = opae_ase.fpga.open(None)
 
     def test_open(self):
         assert self.handle
@@ -262,7 +262,7 @@ class TestHandle(unittest.TestCase):
     def test_context(self):
         self.handle.close()
         assert not self.handle
-        with opae.fpga.open(self.toks[0]) as h:
+        with opae_ase.fpga.open(self.toks[0]) as h:
             assert h
         assert not h
 
@@ -310,15 +310,15 @@ class TestHandle(unittest.TestCase):
 
 class TestSharedBuffer(unittest.TestCase):
     def setUp(self):
-        self.props = opae.fpga.properties(type=opae.fpga.ACCELERATOR)
-        self.toks = opae.fpga.enumerate([self.props])
+        self.props = opae_ase.fpga.properties(type=opae_ase.fpga.ACCELERATOR)
+        self.toks = opae_ase.fpga.enumerate([self.props])
         assert self.toks
-        self.handle = opae.fpga.open(self.toks[0])
+        self.handle = opae_ase.fpga.open(self.toks[0])
         assert self.handle
 
     def test_allocate(self):
-        buff1 = opae.fpga.allocate_shared_buffer(self.handle, 4096)
-        buff2 = opae.fpga.allocate_shared_buffer(self.handle, 4096)
+        buff1 = opae_ase.fpga.allocate_shared_buffer(self.handle, 4096)
+        buff2 = opae_ase.fpga.allocate_shared_buffer(self.handle, 4096)
         assert buff1
         assert buff2
         assert buff1.size() == 4096
@@ -344,8 +344,8 @@ class TestSharedBuffer(unittest.TestCase):
     def test_conext_release(self):
         assert self.handle
         self.handle.close()
-        with opae.fpga.open(self.toks[0]) as h:
-            buff = opae.fpga.allocate_shared_buffer(h, 4096)
+        with opae_ase.fpga.open(self.toks[0]) as h:
+            buff = opae_ase.fpga.allocate_shared_buffer(h, 4096)
             assert buff
             assert buff.size() == 4096
             assert buff.wsid() != 0
@@ -363,11 +363,11 @@ def trigger_port_error(value=1):
 class TestEvent(unittest.TestCase):
     def setUp(self):
         trigger_port_error(0)
-        self.props = opae.fpga.properties(type=opae.fpga.ACCELERATOR,
-                                          socket_id=0)
-        self.toks = opae.fpga.enumerate([self.props])
+        self.props = opae_ase.fpga.properties(type=opae_ase.fpga.ACCELERATOR,
+                                              socket_id=0)
+        self.toks = opae_ase.fpga.enumerate([self.props])
         assert self.toks
-        self.handle = opae.fpga.open(self.toks[0])
+        self.handle = opae_ase.fpga.open(self.toks[0])
         assert self.handle
 
 
@@ -375,8 +375,8 @@ class TestEvent(unittest.TestCase):
         trigger_port_error(0)
 
     def test_events(self):
-        err_ev = opae.fpga.register_event(self.handle,
-                                          opae.fpga.EVENT_ERROR)
+        err_ev = opae_ase.fpga.register_event(self.handle,
+                                              opae_ase.fpga.EVENT_ERROR)
         assert err_ev
         # FIXME: os_object returns long
         # WA is to cast it to int
@@ -417,24 +417,24 @@ class TestError(unittest.TestCase):
                            "errors": {"can_clear": False},
                            "first_error": {"can_clear": False},
                            "inject_error": {"can_clear": True}}
-        props = opae.fpga.properties(type=opae.fpga.ACCELERATOR)
-        toks = opae.fpga.enumerate([props])
+        props = opae_ase.fpga.properties(type=opae_ase.fpga.ACCELERATOR)
+        toks = opae_ase.fpga.enumerate([props])
         assert toks
         self.acc_token = toks[0]
-        props.type = opae.fpga.DEVICE
-        toks = opae.fpga.enumerate([props])
+        props.type = opae_ase.fpga.DEVICE
+        toks = opae_ase.fpga.enumerate([props])
         assert toks
         self.dev_token = toks[0]
 
 
     def test_port_errors(self):
-        for err in opae.fpga.errors(self.acc_token):
+        for err in opae_ase.fpga.errors(self.acc_token):
             assert self.port_errors[err.name]["can_clear"] == err.can_clear
             self.port_errors.pop(err.name)
         assert not self.port_errors
 
     def test_fme_errors(self):
-        for err in opae.fpga.errors(self.dev_token):
+        for err in opae_ase.fpga.errors(self.dev_token):
             assert self.fme_errors[err.name]["can_clear"] == err.can_clear
             self.fme_errors.pop(err.name)
         assert not self.fme_errors
